@@ -1,25 +1,42 @@
 package com.example.colorgenerator
 
 import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
+import androidx.core.graphics.applyCanvas
 import com.example.colorgenerator.models.ColorLock
 import com.example.colorgenerator.room.ColorLockRoom
 import com.example.colorgenerator.ui.components.ColorScreen
 import com.example.colorgenerator.ui.components.LoadingScreen
+import com.example.colorgenerator.ui.components.ShareIcon
 import com.example.colorgenerator.viewmodel.ColorViewModel
 import com.google.accompanist.systemuicontroller.SystemUiController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.delay
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.lang.Exception
 import kotlin.math.sqrt
 
@@ -70,6 +87,8 @@ class MainActivity : ComponentActivity() {
             val systemUiController = rememberSystemUiController()
             var isLoading by remember { mutableStateOf(true) }
             val allColors by colorViewModel.allColors.observeAsState()
+            val view = LocalView.current
+            val context = LocalContext.current
 
             configureAccelerometer {
                 colorViewModel.updateAllColors()
@@ -85,7 +104,51 @@ class MainActivity : ComponentActivity() {
                     isLoading = false
                 }
             } else {
-                ColorScreen(colorViewModel)
+                Box(modifier = Modifier.fillMaxSize()) {
+
+                    ColorScreen(colorViewModel)
+                    ShareIcon(
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .align(Alignment.TopStart),
+                        viewModel = colorViewModel,
+                    ) {
+                        val image =
+                            Bitmap.createBitmap(
+                                view.width,
+                                view.height,
+                                Bitmap.Config.ARGB_8888
+                            )
+                                .applyCanvas { view.draw(this) }
+
+                        val imagesFolder = File(context.cacheDir, "images")
+                        try {
+                            imagesFolder.mkdirs()
+                            val file = File(imagesFolder, "shared_image.png")
+                            val stream = FileOutputStream(file)
+                            image.compress(Bitmap.CompressFormat.PNG, 90, stream)
+                            stream.flush()
+                            stream.close()
+                            val uri = FileProvider.getUriForFile(
+                                context,
+                                BuildConfig.APPLICATION_ID + ".provider",
+                                file
+                            )
+
+                            val intent = Intent(Intent.ACTION_SEND)
+                            intent.putExtra(Intent.EXTRA_STREAM, uri)
+                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            intent.type = "image/png"
+                            val shareIntent = Intent.createChooser(intent, null)
+                            context.startActivity(shareIntent)
+                        } catch (e: IOException) {
+                            Log.d(
+                                "Error",
+                                "IOException while trying to write file for sharing: " + e.message
+                            )
+                        }
+                    }
+                }
             }
         }
     }
