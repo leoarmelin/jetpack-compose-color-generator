@@ -1,19 +1,35 @@
 package com.example.colorgenerator.viewmodel
 
+import android.app.Application
 import android.graphics.Color
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import com.example.colorgenerator.models.ColorLock
+import com.example.colorgenerator.repositories.ColorRepository
+import com.example.colorgenerator.room.ColorLockRoom
+import com.example.colorgenerator.room.ColorLockRoomDatabase
 import java.util.*
 
-class ColorViewModel : ViewModel() {
+class ColorViewModel(application: Application) : ViewModel() {
+    val allColors: LiveData<List<ColorLockRoom>>
+    private val colorRepository: ColorRepository
+
     var colorOne by mutableStateOf(ColorLock(0))
     var colorTwo by mutableStateOf(ColorLock(0))
     var colorThree by mutableStateOf(ColorLock(0))
     var colorFour by mutableStateOf(ColorLock(0))
     var colorFive by mutableStateOf(ColorLock(0))
+
+    init {
+        val colorDb = ColorLockRoomDatabase.getInstance(application)
+        val colorDao = colorDb.colorLockDao()
+        colorRepository = ColorRepository(colorDao)
+
+        allColors = colorRepository.allColors
+    }
 
     private fun getRandomColor(): Int {
         val random = Random()
@@ -117,4 +133,10 @@ class ColorViewModel : ViewModel() {
         )
         colorFive = newColor
     }
+
+    /** Room functions **/
+    fun insertColor(product: ColorLockRoom) {
+        colorRepository.insertColor(product)
+    }
+    /** END Room functions **/
 }
