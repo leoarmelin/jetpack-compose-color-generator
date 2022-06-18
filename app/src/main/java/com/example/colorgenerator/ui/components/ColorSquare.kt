@@ -2,10 +2,8 @@ package com.example.colorgenerator.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -47,17 +45,7 @@ fun ColorSquare(
     ) {
         Row(
             modifier = Modifier
-                .padding(0.dp, 8.dp, 8.dp, 0.dp)
-                .border(
-                    width = 1.dp,
-                    color = if (hasContrastWithWhite) Color(0xC00D0D0D) else Color(0xC0FDFDFD),
-                    shape = RoundedCornerShape(8.dp),
-                )
-                .background(
-                    if (hasContrastWithWhite) Color(0x400D0D0D) else Color(0x40FDFDFD),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .align(Alignment.TopEnd)
+                .align(Alignment.Center)
                 .padding(horizontal = 8.dp, vertical = 4.dp)
                 .pointerInput(Unit) {
                     detectTapGestures(
