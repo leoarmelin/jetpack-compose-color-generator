@@ -15,6 +15,9 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Scaffold
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -27,8 +30,9 @@ import androidx.core.content.FileProvider
 import androidx.core.graphics.applyCanvas
 import com.example.colorgenerator.models.ColorLock
 import com.example.colorgenerator.room.ColorLockRoom
-import com.example.colorgenerator.ui.components.ColorScreen
+import com.example.colorgenerator.ui.screens.ColorScreen
 import com.example.colorgenerator.ui.components.LoadingScreen
+import com.example.colorgenerator.ui.components.MenuAnimator
 import com.example.colorgenerator.ui.components.ShareIcon
 import com.example.colorgenerator.viewmodel.ColorViewModel
 import com.google.accompanist.systemuicontroller.SystemUiController
@@ -41,7 +45,6 @@ import java.lang.Exception
 import kotlin.math.sqrt
 
 class MainActivity : ComponentActivity() {
-
     private lateinit var sensorManager: SensorManager
     private var accelerometerListener: SensorEventListener? = null
     private var accelerometerSensor: Sensor? = null
@@ -87,6 +90,7 @@ class MainActivity : ComponentActivity() {
             val systemUiController = rememberSystemUiController()
             var isLoading by remember { mutableStateOf(true) }
             val allColors by colorViewModel.allColors.observeAsState()
+            val scaffoldState = rememberScaffoldState()
             val view = LocalView.current
             val context = LocalContext.current
 
@@ -104,48 +108,63 @@ class MainActivity : ComponentActivity() {
                     isLoading = false
                 }
             } else {
-                Box(modifier = Modifier.fillMaxSize()) {
+                Scaffold(
+                    modifier = Modifier,
+                    scaffoldState = scaffoldState,
+                    floatingActionButton = {
+                        var isFabOpen by remember { mutableStateOf(false) }
 
-                    ColorScreen(colorViewModel)
-                    ShareIcon(
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .align(Alignment.TopStart),
-                        viewModel = colorViewModel,
-                    ) {
-                        val image =
-                            Bitmap.createBitmap(
-                                view.width,
-                                view.height,
-                                Bitmap.Config.ARGB_8888
-                            )
-                                .applyCanvas { view.draw(this) }
+                        FloatingActionButton(onClick = {
+                            isFabOpen = !isFabOpen
+                        }) {
+                            MenuAnimator(isFabOpen)
+                        }
+                    }
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
 
-                        val imagesFolder = File(context.cacheDir, "images")
-                        try {
-                            imagesFolder.mkdirs()
-                            val file = File(imagesFolder, "shared_image.png")
-                            val stream = FileOutputStream(file)
-                            image.compress(Bitmap.CompressFormat.PNG, 90, stream)
-                            stream.flush()
-                            stream.close()
-                            val uri = FileProvider.getUriForFile(
-                                context,
-                                BuildConfig.APPLICATION_ID + ".provider",
-                                file
-                            )
+                        ColorScreen(colorViewModel, scaffoldState)
 
-                            val intent = Intent(Intent.ACTION_SEND)
-                            intent.putExtra(Intent.EXTRA_STREAM, uri)
-                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            intent.type = "image/png"
-                            val shareIntent = Intent.createChooser(intent, null)
-                            context.startActivity(shareIntent)
-                        } catch (e: IOException) {
-                            Log.d(
-                                "Error",
-                                "IOException while trying to write file for sharing: " + e.message
-                            )
+                        ShareIcon(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .align(Alignment.TopStart),
+                            viewModel = colorViewModel,
+                        ) {
+                            val image =
+                                Bitmap.createBitmap(
+                                    view.width,
+                                    view.height,
+                                    Bitmap.Config.ARGB_8888
+                                )
+                                    .applyCanvas { view.draw(this) }
+
+                            val imagesFolder = File(context.cacheDir, "images")
+                            try {
+                                imagesFolder.mkdirs()
+                                val file = File(imagesFolder, "shared_image.png")
+                                val stream = FileOutputStream(file)
+                                image.compress(Bitmap.CompressFormat.PNG, 90, stream)
+                                stream.flush()
+                                stream.close()
+                                val uri = FileProvider.getUriForFile(
+                                    context,
+                                    BuildConfig.APPLICATION_ID + ".provider",
+                                    file
+                                )
+
+                                val intent = Intent(Intent.ACTION_SEND)
+                                intent.putExtra(Intent.EXTRA_STREAM, uri)
+                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                intent.type = "image/png"
+                                val shareIntent = Intent.createChooser(intent, null)
+                                context.startActivity(shareIntent)
+                            } catch (e: IOException) {
+                                Log.d(
+                                    "Error",
+                                    "IOException while trying to write file for sharing: " + e.message
+                                )
+                            }
                         }
                     }
                 }
