@@ -2,9 +2,7 @@ package com.example.colorgenerator.viewmodel
 
 import android.app.Application
 import android.graphics.Color
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import com.example.colorgenerator.models.ColorLock
@@ -14,21 +12,23 @@ import com.example.colorgenerator.room.ColorLockRoomDatabase
 import java.util.*
 
 class ColorViewModel(application: Application) : ViewModel() {
-    val allColors: LiveData<List<ColorLockRoom>>
+    val allColorsLiveData: LiveData<List<ColorLockRoom>>
     private val colorRepository: ColorRepository
 
-    var colorOne by mutableStateOf(ColorLock(0))
-    var colorTwo by mutableStateOf(ColorLock(0))
-    var colorThree by mutableStateOf(ColorLock(0))
-    var colorFour by mutableStateOf(ColorLock(0))
-    var colorFive by mutableStateOf(ColorLock(0))
+    var colorList = mutableStateListOf(
+        ColorLock(0),
+        ColorLock(0),
+        ColorLock(0),
+        ColorLock(0),
+        ColorLock(0)
+    )
 
     init {
         val colorDb = ColorLockRoomDatabase.getInstance(application)
         val colorDao = colorDb.colorLockDao()
         colorRepository = ColorRepository(colorDao)
 
-        allColors = colorRepository.allColors
+        allColorsLiveData = colorRepository.allColors
     }
 
     private fun getRandomColor(): Int {
@@ -37,105 +37,41 @@ class ColorViewModel(application: Application) : ViewModel() {
     }
 
     fun updateAllColors() {
-        updateColorOneValue()
-        updateColorTwoValue()
-        updateColorThreeValue()
-        updateColorFourValue()
-        updateColorFiveValue()
+        for (i in 0 until colorList.size) {
+            updateColorValue(i)
+        }
     }
 
-    fun updateColorOneValue() {
-        if (colorOne.isLocked) return
+    fun updateColorValue(i: Int) {
+        if (colorList[i].isLocked) return
 
-        val newColor = ColorLock(
-            getRandomColor(),
-            colorOne.isLocked
-        )
-        colorOne = newColor
+        val newColor = ColorLock(getRandomColor(), colorList[i].isLocked)
+
+        colorList[i] = newColor
     }
 
-    fun updateColorTwoValue() {
-        if (colorTwo.isLocked) return
-
+    fun updateColorLock(i: Int) {
         val newColor = ColorLock(
-            getRandomColor(),
-            colorTwo.isLocked
+            colorList[i].value,
+            !colorList[i].isLocked
         )
-        colorTwo = newColor
-    }
-
-    fun updateColorThreeValue() {
-        if (colorThree.isLocked) return
-
-        val newColor = ColorLock(
-            getRandomColor(),
-            colorThree.isLocked
-        )
-        colorThree = newColor
-    }
-
-    fun updateColorFourValue() {
-        if (colorFour.isLocked) return
-
-        val newColor = ColorLock(
-            getRandomColor(),
-            colorFour.isLocked
-        )
-        colorFour = newColor
-    }
-
-    fun updateColorFiveValue() {
-        if (colorFive.isLocked) return
-
-        val newColor = ColorLock(
-            getRandomColor(),
-            colorFive.isLocked
-        )
-        colorFive = newColor
-    }
-
-    fun updateColorOneLock() {
-        val newColor = ColorLock(
-            colorOne.value,
-            !colorOne.isLocked
-        )
-        colorOne = newColor
-    }
-
-    fun updateColorTwoLock() {
-        val newColor = ColorLock(
-            colorTwo.value,
-            !colorTwo.isLocked
-        )
-        colorTwo = newColor
-    }
-
-    fun updateColorThreeLock() {
-        val newColor = ColorLock(
-            colorThree.value,
-            !colorThree.isLocked
-        )
-        colorThree = newColor
-    }
-
-    fun updateColorFourLock() {
-        val newColor = ColorLock(
-            colorFour.value,
-            !colorFour.isLocked
-        )
-        colorFour = newColor
-    }
-
-    fun updateColorFiveLock() {
-        val newColor = ColorLock(
-            colorFive.value,
-            !colorFive.isLocked
-        )
-        colorFive = newColor
+        colorList[i] = newColor
     }
 
     /** Room functions **/
-    fun insertColor(product: ColorLockRoom) {
+    fun insertColor(i: Int) {
+        val product = ColorLockRoom(
+            colorName = when (i) {
+                0 -> "colorOne"
+                1 -> "colorTwo"
+                2 -> "colorThree"
+                3 -> "colorFour"
+                4 -> "colorFive"
+                else -> throw Exception("colorName not expected, out of range")
+            },
+            value = colorList[i].value,
+            isLocked = colorList[i].isLocked
+        )
         colorRepository.insertColor(product)
     }
     /** END Room functions **/

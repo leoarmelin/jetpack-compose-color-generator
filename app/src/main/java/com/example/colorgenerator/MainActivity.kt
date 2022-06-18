@@ -30,7 +30,6 @@ import androidx.core.graphics.applyCanvas
 import com.example.colorgenerator.models.ColorLock
 import com.example.colorgenerator.models.navigation.MainNavRoutes
 import com.example.colorgenerator.navigation.MainNavHost
-import com.example.colorgenerator.room.ColorLockRoom
 import com.example.colorgenerator.ui.components.fab.MenuIconAnimator
 import com.example.colorgenerator.ui.components.fab.MenuList
 import com.example.colorgenerator.viewmodel.ColorViewModel
@@ -41,7 +40,7 @@ import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.lang.Exception
+import kotlin.Exception
 import kotlin.math.sqrt
 
 class MainActivity : ComponentActivity() {
@@ -64,7 +63,7 @@ class MainActivity : ComponentActivity() {
         colorViewModel = ColorViewModel(application)
         navigationViewModel = NavigationViewModel()
 
-        colorViewModel.allColors.observe(this) { colorList ->
+        colorViewModel.allColorsLiveData.observe(this) { colorList ->
             if (colorList.isNullOrEmpty()) {
                 colorViewModel.updateAllColors()
                 return@observe
@@ -81,22 +80,21 @@ class MainActivity : ComponentActivity() {
             val colorFive =
                 colorList.find { it.colorName == "colorFive" } ?: throw Exception("Color not found")
 
-            colorViewModel.colorOne = ColorLock(colorOne.value, colorOne.isLocked)
-            colorViewModel.colorTwo = ColorLock(colorTwo.value, colorTwo.isLocked)
-            colorViewModel.colorThree = ColorLock(colorThree.value, colorThree.isLocked)
-            colorViewModel.colorFour = ColorLock(colorFour.value, colorFour.isLocked)
-            colorViewModel.colorFive = ColorLock(colorFive.value, colorFive.isLocked)
+
+            colorViewModel.colorList[0] = ColorLock(colorOne.value, colorOne.isLocked)
+            colorViewModel.colorList[1] = ColorLock(colorTwo.value, colorTwo.isLocked)
+            colorViewModel.colorList[2] = ColorLock(colorThree.value, colorThree.isLocked)
+            colorViewModel.colorList[3] = ColorLock(colorFour.value, colorFour.isLocked)
+            colorViewModel.colorList[4] = ColorLock(colorFive.value, colorFive.isLocked)
         }
 
         setContent {
             val systemUiController = rememberSystemUiController()
             var isLoading by remember { mutableStateOf(true) }
-            val allColors by colorViewModel.allColors.observeAsState()
+            val allColors by colorViewModel.allColorsLiveData.observeAsState()
             val scaffoldState = rememberScaffoldState()
 
-            configureAccelerometer {
-                colorViewModel.updateAllColors()
-            }
+            configureAccelerometer { colorViewModel.updateAllColors() }
 
             ConfigureApp(systemUiController, colorViewModel, isLoading)
 
@@ -124,9 +122,7 @@ class MainActivity : ComponentActivity() {
 
                     Box {
                         FloatingActionButton(
-                            onClick = {
-                                isOpen = isOpen != true
-                            },
+                            onClick = { isOpen = isOpen != true },
                             modifier = Modifier.align(Alignment.BottomEnd),
                             backgroundColor = Color(0xFF257683)
                         ) {
@@ -170,42 +166,10 @@ class MainActivity : ComponentActivity() {
         super.onPause()
 
         if (::colorViewModel.isInitialized) {
-            colorViewModel.apply {
-                this.insertColor(
-                    ColorLockRoom(
-                        colorName = "colorOne",
-                        value = this.colorOne.value,
-                        isLocked = this.colorOne.isLocked
-                    )
-                )
-                this.insertColor(
-                    ColorLockRoom(
-                        colorName = "colorTwo",
-                        value = this.colorTwo.value,
-                        isLocked = this.colorTwo.isLocked
-                    )
-                )
-                this.insertColor(
-                    ColorLockRoom(
-                        colorName = "colorThree",
-                        value = this.colorThree.value,
-                        isLocked = this.colorThree.isLocked
-                    )
-                )
-                this.insertColor(
-                    ColorLockRoom(
-                        colorName = "colorFour",
-                        value = this.colorFour.value,
-                        isLocked = this.colorFour.isLocked
-                    )
-                )
-                this.insertColor(
-                    ColorLockRoom(
-                        colorName = "colorFive",
-                        value = this.colorFive.value,
-                        isLocked = this.colorFive.isLocked
-                    )
-                )
+            with(colorViewModel) {
+                for (i in 0 until colorList.size) {
+                    insertColor(i)
+                }
             }
         }
 
@@ -292,8 +256,8 @@ fun ConfigureApp(
     colorViewModel: ColorViewModel,
     isLoading: Boolean
 ) {
-    val animatedColorOne = animateColorAsState(Color(colorViewModel.colorOne.value))
-    val animatedColorFive = animateColorAsState(Color(colorViewModel.colorFive.value))
+    val animatedColorOne = animateColorAsState(Color(colorViewModel.colorList[0].value))
+    val animatedColorFive = animateColorAsState(Color(colorViewModel.colorList[4].value))
     uiController.setStatusBarColor(
         color = if (isLoading) Color(0xFF257683) else animatedColorOne.value,
         darkIcons = false
