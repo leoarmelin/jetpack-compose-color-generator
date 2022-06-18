@@ -13,7 +13,7 @@ import com.example.colorgenerator.viewmodel.ColorViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun ColorScreen(colorViewModel: ColorViewModel, scaffoldState: ScaffoldState) {
+fun RandomGeneratorScreen(colorViewModel: ColorViewModel, scaffoldState: ScaffoldState) {
     val clipboardManager = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
 

@@ -1,4 +1,4 @@
-package com.example.colorgenerator.ui.components
+package com.example.colorgenerator.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

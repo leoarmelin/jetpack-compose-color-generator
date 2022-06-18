@@ -8,8 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.colorgenerator.models.navigation.MainNavRoutes
-import com.example.colorgenerator.ui.components.LoadingScreen
-import com.example.colorgenerator.ui.screens.ColorScreen
+import com.example.colorgenerator.ui.screens.LoadingScreen
+import com.example.colorgenerator.ui.screens.RandomGeneratorScreen
 import com.example.colorgenerator.viewmodel.ColorViewModel
 import com.example.colorgenerator.viewmodel.NavigationViewModel
 
@@ -28,7 +28,7 @@ fun MainNavHost(
                 LoadingScreen()
             }
             composable(MainNavRoutes.RandomGenerator.routeName) {
-                ColorScreen(colorViewModel = colorViewModel, scaffoldState = scaffoldState)
+                RandomGeneratorScreen(colorViewModel = colorViewModel, scaffoldState = scaffoldState)
             }
         }
     }
