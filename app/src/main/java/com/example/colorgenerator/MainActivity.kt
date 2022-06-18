@@ -29,12 +29,15 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.graphics.applyCanvas
 import com.example.colorgenerator.models.ColorLock
+import com.example.colorgenerator.models.navigation.MainNavRoutes
+import com.example.colorgenerator.navigation.MainNavHost
 import com.example.colorgenerator.room.ColorLockRoom
 import com.example.colorgenerator.ui.screens.ColorScreen
 import com.example.colorgenerator.ui.components.LoadingScreen
 import com.example.colorgenerator.ui.components.MenuAnimator
 import com.example.colorgenerator.ui.components.ShareIcon
 import com.example.colorgenerator.viewmodel.ColorViewModel
+import com.example.colorgenerator.viewmodel.NavigationViewModel
 import com.google.accompanist.systemuicontroller.SystemUiController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.delay
@@ -53,6 +56,7 @@ class MainActivity : ComponentActivity() {
     private var mAccelLast = SensorManager.GRAVITY_EARTH
 
     private lateinit var colorViewModel: ColorViewModel
+    private lateinit var navigationViewModel: NavigationViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +65,7 @@ class MainActivity : ComponentActivity() {
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) ?: null
 
         colorViewModel = ColorViewModel(application)
+        navigationViewModel = NavigationViewModel()
 
         colorViewModel.allColors.observe(this) { colorList ->
             if (colorList.isNullOrEmpty()) {
@@ -101,73 +106,36 @@ class MainActivity : ComponentActivity() {
             ConfigureApp(systemUiController, colorViewModel, isLoading)
 
             if (allColors == null || isLoading) {
-                LoadingScreen()
+                navigationViewModel.setRoute(MainNavRoutes.Loading.routeName)
 
                 LaunchedEffect(Unit) {
                     delay(1000)
                     isLoading = false
+                    navigationViewModel.setRoute(MainNavRoutes.RandomGenerator.routeName)
                 }
             } else {
-                Scaffold(
-                    modifier = Modifier,
-                    scaffoldState = scaffoldState,
-                    floatingActionButton = {
-                        var isFabOpen by remember { mutableStateOf(false) }
+                navigationViewModel.setRoute(MainNavRoutes.RandomGenerator.routeName)
+            }
 
-                        FloatingActionButton(onClick = {
-                            isFabOpen = !isFabOpen
-                        }) {
-                            MenuAnimator(isFabOpen)
-                        }
-                    }
-                ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
+            Scaffold(
+                modifier = Modifier,
+                scaffoldState = scaffoldState,
+                floatingActionButton = {
+                    var isFabOpen by remember { mutableStateOf(false) }
 
-                        ColorScreen(colorViewModel, scaffoldState)
-
-                        ShareIcon(
-                            modifier = Modifier
-                                .padding(4.dp)
-                                .align(Alignment.TopStart),
-                            viewModel = colorViewModel,
-                        ) {
-                            val image =
-                                Bitmap.createBitmap(
-                                    view.width,
-                                    view.height,
-                                    Bitmap.Config.ARGB_8888
-                                )
-                                    .applyCanvas { view.draw(this) }
-
-                            val imagesFolder = File(context.cacheDir, "images")
-                            try {
-                                imagesFolder.mkdirs()
-                                val file = File(imagesFolder, "shared_image.png")
-                                val stream = FileOutputStream(file)
-                                image.compress(Bitmap.CompressFormat.PNG, 90, stream)
-                                stream.flush()
-                                stream.close()
-                                val uri = FileProvider.getUriForFile(
-                                    context,
-                                    BuildConfig.APPLICATION_ID + ".provider",
-                                    file
-                                )
-
-                                val intent = Intent(Intent.ACTION_SEND)
-                                intent.putExtra(Intent.EXTRA_STREAM, uri)
-                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                intent.type = "image/png"
-                                val shareIntent = Intent.createChooser(intent, null)
-                                context.startActivity(shareIntent)
-                            } catch (e: IOException) {
-                                Log.d(
-                                    "Error",
-                                    "IOException while trying to write file for sharing: " + e.message
-                                )
-                            }
-                        }
+                    FloatingActionButton(onClick = {
+                        isFabOpen = !isFabOpen
+                    }) {
+                        MenuAnimator(isFabOpen)
                     }
                 }
+            ) {
+                MainNavHost(
+                    modifier = Modifier.fillMaxSize(),
+                    navigationViewModel = navigationViewModel,
+                    colorViewModel = colorViewModel,
+                    scaffoldState = scaffoldState
+                )
             }
         }
     }
@@ -284,3 +252,46 @@ fun ConfigureApp(
         navigationBarContrastEnforced = true
     )
 }
+
+
+//ShareIcon(
+//modifier = Modifier
+//.padding(4.dp)
+//.align(Alignment.TopStart),
+//viewModel = colorViewModel,
+//) {
+//    val image =
+//        Bitmap.createBitmap(
+//            view.width,
+//            view.height,
+//            Bitmap.Config.ARGB_8888
+//        )
+//            .applyCanvas { view.draw(this) }
+//
+//    val imagesFolder = File(context.cacheDir, "images")
+//    try {
+//        imagesFolder.mkdirs()
+//        val file = File(imagesFolder, "shared_image.png")
+//        val stream = FileOutputStream(file)
+//        image.compress(Bitmap.CompressFormat.PNG, 90, stream)
+//        stream.flush()
+//        stream.close()
+//        val uri = FileProvider.getUriForFile(
+//            context,
+//            BuildConfig.APPLICATION_ID + ".provider",
+//            file
+//        )
+//
+//        val intent = Intent(Intent.ACTION_SEND)
+//        intent.putExtra(Intent.EXTRA_STREAM, uri)
+//        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+//        intent.type = "image/png"
+//        val shareIntent = Intent.createChooser(intent, null)
+//        context.startActivity(shareIntent)
+//    } catch (e: IOException) {
+//        Log.d(
+//            "Error",
+//            "IOException while trying to write file for sharing: " + e.message
+//        )
+//    }
+//}
