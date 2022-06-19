@@ -16,7 +16,8 @@ import com.example.colorgenerator.models.navigation.MainNavRoutes
 fun MenuList(isOpen: Boolean?, onSelectItem: (itemName: String) -> Unit) {
     val namesList = remember {
         listOf(
-            MainNavRoutes.RandomGenerator,
+            MainNavRoutes.ColorGenerator,
+            MainNavRoutes.GradientGenerator
         )
     }
 

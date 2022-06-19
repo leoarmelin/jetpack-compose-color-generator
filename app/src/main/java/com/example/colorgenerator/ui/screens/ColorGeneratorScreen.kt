@@ -13,23 +13,23 @@ import com.example.colorgenerator.viewmodel.ColorViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun RandomGeneratorScreen(colorViewModel: ColorViewModel, scaffoldState: ScaffoldState) {
+fun ColorGeneratorScreen(colorViewModel: ColorViewModel, scaffoldState: ScaffoldState) {
     val clipboardManager = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
 
     Column {
-        for (i in 0 until colorViewModel.colorList.size) {
+        for (i in 0 until colorViewModel.colorGeneratorList.size) {
             ColorSquare(
                 Modifier.weight(1f),
-                colorViewModel.colorList[i].value,
-                colorViewModel.colorList[i].value.getColorName(),
-                colorViewModel.colorList[i].isLocked,
-                { colorViewModel.updateColorValue(i) },
-                { colorViewModel.updateColorLock(i) },
+                colorViewModel.colorGeneratorList[i].value,
+                colorViewModel.colorGeneratorList[i].value.getColorName(),
+                colorViewModel.colorGeneratorList[i].isLocked,
+                { colorViewModel.updateColorGeneratorValue(i) },
+                { colorViewModel.updateColorGeneratorLock(i) },
                 {
-                    clipboardManager.setText(AnnotatedString(colorViewModel.colorList[i].value.getColorName()))
+                    clipboardManager.setText(AnnotatedString(colorViewModel.colorGeneratorList[i].value.getColorName()))
                     scope.launch {
-                        scaffoldState.snackbarHostState.showSnackbar("Copied: ${colorViewModel.colorList[i].value.getColorName()}")
+                        scaffoldState.snackbarHostState.showSnackbar("Copied: ${colorViewModel.colorGeneratorList[i].value.getColorName()}")
                     }
                 }
             )

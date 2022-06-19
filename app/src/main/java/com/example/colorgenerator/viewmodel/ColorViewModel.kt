@@ -15,12 +15,17 @@ class ColorViewModel(application: Application) : ViewModel() {
     val allColorsLiveData: LiveData<List<ColorLockRoom>>
     private val colorRepository: ColorRepository
 
-    var colorList = mutableStateListOf(
+    var colorGeneratorList = mutableStateListOf(
         ColorLock(0),
         ColorLock(0),
         ColorLock(0),
         ColorLock(0),
         ColorLock(0)
+    )
+
+    var gradientGeneratorList = mutableStateListOf(
+        ColorLock(0),
+        ColorLock(0),
     )
 
     init {
@@ -36,43 +41,99 @@ class ColorViewModel(application: Application) : ViewModel() {
         return Color.argb(255, random.nextInt(256), random.nextInt(256), random.nextInt(256))
     }
 
-    fun updateAllColors() {
-        for (i in 0 until colorList.size) {
-            updateColorValue(i)
+    /** Color Generator **/
+    fun updateColorGeneratorList() {
+        for (i in 0 until colorGeneratorList.size) {
+            updateColorGeneratorValue(i)
         }
     }
 
-    fun updateColorValue(i: Int) {
-        if (colorList[i].isLocked) return
+    fun updateColorGeneratorValue(i: Int) {
+        if (colorGeneratorList[i].isLocked) return
 
-        val newColor = ColorLock(getRandomColor(), colorList[i].isLocked)
+        val newColor = ColorLock(getRandomColor(), colorGeneratorList[i].isLocked)
 
-        colorList[i] = newColor
+        colorGeneratorList[i] = newColor
     }
 
-    fun updateColorLock(i: Int) {
+    fun updateColorGeneratorLock(i: Int) {
         val newColor = ColorLock(
-            colorList[i].value,
-            !colorList[i].isLocked
+            colorGeneratorList[i].value,
+            !colorGeneratorList[i].isLocked
         )
-        colorList[i] = newColor
+        colorGeneratorList[i] = newColor
     }
+    /** END Color Generator **/
+
+    /** Gradient Generator **/
+    fun updateGradientGeneratorList() {
+        for (i in 0 until gradientGeneratorList.size) {
+            updateGradientGeneratorValue(i)
+        }
+    }
+
+    fun updateGradientGeneratorValue(i: Int) {
+        if (gradientGeneratorList[i].isLocked) return
+
+        val newColor = ColorLock(getRandomColor(), gradientGeneratorList[i].isLocked)
+
+        gradientGeneratorList[i] = newColor
+    }
+
+    fun updateGradientGeneratorLock(i: Int) {
+        val newColor = ColorLock(
+            gradientGeneratorList[i].value,
+            !gradientGeneratorList[i].isLocked
+        )
+        gradientGeneratorList[i] = newColor
+    }
+    /** END Gradient Generator **/
 
     /** Room functions **/
-    fun insertColor(i: Int) {
-        val product = ColorLockRoom(
-            colorName = when (i) {
-                0 -> "colorOne"
-                1 -> "colorTwo"
-                2 -> "colorThree"
-                3 -> "colorFour"
-                4 -> "colorFive"
-                else -> throw Exception("colorName not expected, out of range")
-            },
-            value = colorList[i].value,
-            isLocked = colorList[i].isLocked
+    fun insertColorGeneratorColor(i: Int) {
+        val color = ColorLockRoom(
+            colorName = "colorGenerator${i + 1}",
+            value = colorGeneratorList[i].value,
+            isLocked = colorGeneratorList[i].isLocked
         )
-        colorRepository.insertColor(product)
+        colorRepository.insertColor(color)
+    }
+
+    fun insertGradientGeneratorColor(i: Int) {
+        val color = ColorLockRoom(
+            colorName = "gradientGenerator${i + 1}",
+            value = gradientGeneratorList[i].value,
+            isLocked = gradientGeneratorList[i].isLocked
+        )
+        colorRepository.insertColor(color)
+    }
+
+    fun updateAllColorsFromRoom(colors: List<ColorLockRoom>?) {
+        if (colors.isNullOrEmpty()) {
+            updateColorGeneratorList()
+            return
+        }
+
+        try {
+            for (i in 0 until colorGeneratorList.size) {
+                val color = colors.find { it.colorName == "colorGenerator${i + 1}" }
+                    ?: throw Exception("colorGenerator not found")
+
+                colorGeneratorList[i] = ColorLock(color.value, color.isLocked)
+            }
+
+            for (i in 0 until gradientGeneratorList.size) {
+                val color = colors.find { it.colorName == "gradientGenerator${i + 1}" }
+                    ?: throw Exception("gradientGenerator not found")
+
+                gradientGeneratorList[i] = ColorLock(color.value, color.isLocked)
+            }
+        } catch (err: Exception) {
+            when (err.message) {
+                "colorGenerator not found" -> updateColorGeneratorList()
+                "gradientGenerator not found" -> updateGradientGeneratorList()
+            }
+        }
     }
     /** END Room functions **/
 }

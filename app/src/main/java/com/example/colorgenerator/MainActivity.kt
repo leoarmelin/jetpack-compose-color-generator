@@ -13,16 +13,14 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.content.FileProvider
@@ -30,8 +28,7 @@ import androidx.core.graphics.applyCanvas
 import com.example.colorgenerator.models.ColorLock
 import com.example.colorgenerator.models.navigation.MainNavRoutes
 import com.example.colorgenerator.navigation.MainNavHost
-import com.example.colorgenerator.ui.components.fab.MenuIconAnimator
-import com.example.colorgenerator.ui.components.fab.MenuList
+import com.example.colorgenerator.ui.components.fab.AnimatedFAB
 import com.example.colorgenerator.viewmodel.ColorViewModel
 import com.example.colorgenerator.viewmodel.NavigationViewModel
 import com.google.accompanist.systemuicontroller.SystemUiController
@@ -40,7 +37,6 @@ import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import kotlin.Exception
 import kotlin.math.sqrt
 
 class MainActivity : ComponentActivity() {
@@ -64,28 +60,7 @@ class MainActivity : ComponentActivity() {
         navigationViewModel = NavigationViewModel()
 
         colorViewModel.allColorsLiveData.observe(this) { colorList ->
-            if (colorList.isNullOrEmpty()) {
-                colorViewModel.updateAllColors()
-                return@observe
-            }
-
-            val colorOne =
-                colorList.find { it.colorName == "colorOne" } ?: throw Exception("Color not found")
-            val colorTwo =
-                colorList.find { it.colorName == "colorTwo" } ?: throw Exception("Color not found")
-            val colorThree = colorList.find { it.colorName == "colorThree" }
-                ?: throw Exception("Color not found")
-            val colorFour =
-                colorList.find { it.colorName == "colorFour" } ?: throw Exception("Color not found")
-            val colorFive =
-                colorList.find { it.colorName == "colorFive" } ?: throw Exception("Color not found")
-
-
-            colorViewModel.colorList[0] = ColorLock(colorOne.value, colorOne.isLocked)
-            colorViewModel.colorList[1] = ColorLock(colorTwo.value, colorTwo.isLocked)
-            colorViewModel.colorList[2] = ColorLock(colorThree.value, colorThree.isLocked)
-            colorViewModel.colorList[3] = ColorLock(colorFour.value, colorFour.isLocked)
-            colorViewModel.colorList[4] = ColorLock(colorFive.value, colorFive.isLocked)
+            colorViewModel.updateAllColorsFromRoom(colorList)
         }
 
         setContent {
@@ -94,9 +69,14 @@ class MainActivity : ComponentActivity() {
             val allColors by colorViewModel.allColorsLiveData.observeAsState()
             val scaffoldState = rememberScaffoldState()
 
-            configureAccelerometer { colorViewModel.updateAllColors() }
+            configureAccelerometer {
+                when (navigationViewModel.currentRoute) {
+                    MainNavRoutes.ColorGenerator.routeName -> colorViewModel.updateColorGeneratorList()
+                    MainNavRoutes.GradientGenerator.routeName -> colorViewModel.updateGradientGeneratorList()
+                }
+            }
 
-            ConfigureApp(systemUiController, colorViewModel, isLoading)
+            ConfigureApp(systemUiController, colorViewModel, navigationViewModel.currentRoute)
 
             if (allColors == null || isLoading) {
                 navigationViewModel.setRoute(MainNavRoutes.Loading.routeName)
@@ -104,10 +84,8 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     delay(1000)
                     isLoading = false
-                    navigationViewModel.setRoute(MainNavRoutes.RandomGenerator.routeName)
+                    navigationViewModel.setRoute(MainNavRoutes.ColorGenerator.routeName)
                 }
-            } else {
-                navigationViewModel.setRoute(MainNavRoutes.RandomGenerator.routeName)
             }
 
             Scaffold(
@@ -120,24 +98,23 @@ class MainActivity : ComponentActivity() {
                     val context = LocalContext.current
                     var isOpen by remember { mutableStateOf<Boolean?>(null) }
 
-                    Box {
-                        FloatingActionButton(
-                            onClick = { isOpen = isOpen != true },
-                            modifier = Modifier.align(Alignment.BottomEnd),
-                            backgroundColor = Color(0xFF257683)
-                        ) {
-                            MenuIconAnimator(isOpen)
-                        }
+                    AnimatedFAB(
+                        isOpen = isOpen,
+                        onMenuClick = { isOpen = isOpen != true },
+                        onSelectItem = { itemName ->
+                            isOpen = false
 
-                        MenuList(isOpen) { itemName ->
                             when (itemName) {
-                                MainNavRoutes.RandomGenerator.menuName -> navigationViewModel.setRoute(
-                                    MainNavRoutes.RandomGenerator.routeName
+                                MainNavRoutes.ColorGenerator.menuName -> navigationViewModel.setRoute(
+                                    MainNavRoutes.ColorGenerator.routeName
+                                )
+                                MainNavRoutes.GradientGenerator.menuName -> navigationViewModel.setRoute(
+                                    MainNavRoutes.GradientGenerator.routeName
                                 )
                                 "Share" -> shareApp(context, view)
                             }
                         }
-                    }
+                    )
                 }
             ) {
                 MainNavHost(
@@ -167,8 +144,11 @@ class MainActivity : ComponentActivity() {
 
         if (::colorViewModel.isInitialized) {
             with(colorViewModel) {
-                for (i in 0 until colorList.size) {
-                    insertColor(i)
+                for (i in 0 until colorGeneratorList.size) {
+                    insertColorGeneratorColor(i)
+                }
+                for (i in 0 until gradientGeneratorList.size) {
+                    insertGradientGeneratorColor(i)
                 }
             }
         }
@@ -254,16 +234,25 @@ class MainActivity : ComponentActivity() {
 fun ConfigureApp(
     uiController: SystemUiController,
     colorViewModel: ColorViewModel,
-    isLoading: Boolean
+    currentRoute: String
 ) {
-    val animatedColorOne = animateColorAsState(Color(colorViewModel.colorList[0].value))
-    val animatedColorFive = animateColorAsState(Color(colorViewModel.colorList[4].value))
+    val colorList = when (currentRoute) {
+        MainNavRoutes.ColorGenerator.routeName -> colorViewModel.colorGeneratorList
+        MainNavRoutes.GradientGenerator.routeName -> listOf(ColorLock(Color.Black.toArgb(), false))
+        MainNavRoutes.Loading.routeName -> listOf(ColorLock(Color(0xFF257683).toArgb(), false))
+
+        else -> return
+    }
+    val animatedStatusBarColor: State<Color> = animateColorAsState(Color(colorList.first().value))
+    val animatedNavigationBarColor: State<Color> =
+        animateColorAsState(Color(colorList.last().value))
+
     uiController.setStatusBarColor(
-        color = if (isLoading) Color(0xFF257683) else animatedColorOne.value,
+        color = animatedStatusBarColor.value,
         darkIcons = false
     )
     uiController.setNavigationBarColor(
-        color = if (isLoading) Color(0xFF257683) else animatedColorFive.value,
+        color = animatedNavigationBarColor.value,
         navigationBarContrastEnforced = true
     )
 }
