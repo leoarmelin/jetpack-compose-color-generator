@@ -3,9 +3,6 @@ package com.example.colorgenerator
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
@@ -25,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.content.FileProvider
 import androidx.core.graphics.applyCanvas
+import com.example.colorgenerator.helpers.AccelerometerHandler
 import com.example.colorgenerator.models.ColorLock
 import com.example.colorgenerator.models.navigation.MainNavRoutes
 import com.example.colorgenerator.navigation.MainNavHost
@@ -38,24 +36,17 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import kotlin.math.sqrt
 
 class MainActivity : ComponentActivity() {
-    private lateinit var sensorManager: SensorManager
-    private var accelerometerListener: SensorEventListener? = null
-    private var accelerometerSensor: Sensor? = null
-    private var mAccel = 0f
-    private var mAccelCurrent = SensorManager.GRAVITY_EARTH
-    private var mAccelLast = SensorManager.GRAVITY_EARTH
-
     private lateinit var colorViewModel: ColorViewModel
     private lateinit var navigationViewModel: NavigationViewModel
+
+    private lateinit var accelerometerHandler: AccelerometerHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) ?: null
+        accelerometerHandler = AccelerometerHandler(getSystemService(Context.SENSOR_SERVICE) as SensorManager)
 
         colorViewModel = ColorViewModel(application)
         navigationViewModel = NavigationViewModel()
@@ -72,7 +63,7 @@ class MainActivity : ComponentActivity() {
             val isSharingScreenshot = remember { mutableStateOf(false) }
             val allColors by colorViewModel.allColorsLiveData.observeAsState()
 
-            configureAccelerometer {
+            accelerometerHandler.setOnShakeListener {
                 when (navigationViewModel.currentRoute) {
                     MainNavRoutes.ColorGenerator.routeName -> colorViewModel.updateColorGeneratorList()
                     MainNavRoutes.GradientGenerator.routeName -> colorViewModel.updateGradientGeneratorList()
@@ -141,12 +132,8 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
-        if (::sensorManager.isInitialized && accelerometerListener != null) {
-            sensorManager.registerListener(
-                accelerometerListener,
-                accelerometerSensor,
-                SensorManager.SENSOR_DELAY_NORMAL
-            )
+        if (accelerometerHandler.accelerometerListener != null) {
+            accelerometerHandler.registerListener()
         }
     }
 
@@ -164,42 +151,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        if (::sensorManager.isInitialized && accelerometerListener != null) {
-            sensorManager.unregisterListener(
-                accelerometerListener,
-            )
-        }
-    }
-
-    private fun configureAccelerometer(onShake: () -> Unit) {
-        if (accelerometerSensor != null) {
-            accelerometerListener = object : SensorEventListener {
-                override fun onSensorChanged(event: SensorEvent?) {
-                    if (event == null) return
-
-                    val x = event.values[0]
-                    val y = event.values[1]
-                    val z = event.values[2]
-
-                    mAccelLast = mAccelCurrent
-                    mAccelCurrent = sqrt(x * x + y * y + z * z)
-
-                    val delta = mAccelCurrent - mAccelLast
-                    mAccel = mAccel * 0.9f + delta * 0.1f
-
-                    if (mAccel > 0.5f || mAccel < -0.5f) {
-                        onShake()
-                    }
-                }
-
-                override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
-            }
-
-            sensorManager.registerListener(
-                accelerometerListener,
-                accelerometerSensor,
-                SensorManager.SENSOR_DELAY_NORMAL
-            )
+        if (accelerometerHandler.accelerometerListener != null) {
+            accelerometerHandler.unregisterListener()
         }
     }
 
