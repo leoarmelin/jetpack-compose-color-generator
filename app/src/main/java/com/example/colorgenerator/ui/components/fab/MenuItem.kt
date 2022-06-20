@@ -16,8 +16,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.colorgenerator.ui.theme.montserratFontFamily
 
 @Composable
 fun MenuItem(itemName: String, iconId: Int? = null, onClick: (itemName: String) -> Unit) {
@@ -45,7 +47,9 @@ fun MenuItem(itemName: String, iconId: Int? = null, onClick: (itemName: String) 
         Text(
             text = itemName,
             color = Color.White,
-            fontSize = 16.sp
+            fontSize = 16.sp,
+            fontFamily = montserratFontFamily,
+            fontWeight = FontWeight.Normal
         )
     }
 }

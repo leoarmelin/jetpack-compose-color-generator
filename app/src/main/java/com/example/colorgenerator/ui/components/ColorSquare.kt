@@ -13,10 +13,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
 import com.example.colorgenerator.R
+import com.example.colorgenerator.ui.theme.montserratFontFamily
 
 @Composable
 fun ColorSquare(
@@ -64,10 +66,13 @@ fun ColorSquare(
                         .align(Alignment.CenterVertically)
                 )
             }
+
             Text(
                 text = colorString,
-                fontSize = 18.sp,
-                color = if (hasContrastWithWhite) Color(0xC00D0D0D) else Color(0xC0FDFDFD)
+                fontSize = 20.sp,
+                color = if (hasContrastWithWhite) Color(0xC00D0D0D) else Color(0xC0FDFDFD),
+                fontFamily = montserratFontFamily,
+                fontWeight = FontWeight.Medium
             )
         }
     }
