@@ -26,7 +26,10 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 @Composable
-fun GradientGeneratorScreen(colorViewModel: ColorViewModel, scaffoldState: ScaffoldState) {
+fun GradientGeneratorScreen(
+    colorViewModel: ColorViewModel,
+    scaffoldState: ScaffoldState
+) {
     val clipboardManager = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
 
@@ -60,7 +63,9 @@ fun GradientGeneratorScreen(colorViewModel: ColorViewModel, scaffoldState: Scaff
             .gradientBackground(listOf(animatedColorOne, animatedColorTwo), rotation)
     ) {
         ColorIndicatorList(
-            modifier = Modifier.padding(top = 16.dp, end = 16.dp).align(Alignment.TopEnd),
+            modifier = Modifier
+                .padding(top = 16.dp, end = 16.dp)
+                .align(Alignment.TopEnd),
             colorList = colorViewModel.gradientGeneratorList,
             onLongPress = onLongPress,
             onTextClick = onTextClick

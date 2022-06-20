@@ -34,6 +34,7 @@ import com.example.colorgenerator.viewmodel.NavigationViewModel
 import com.google.accompanist.systemuicontroller.SystemUiController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -64,10 +65,12 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            val coroutineScope = rememberCoroutineScope()
+            val scaffoldState = rememberScaffoldState()
             val systemUiController = rememberSystemUiController()
             var isLoading by remember { mutableStateOf(true) }
+            val isSharingScreenshot = remember { mutableStateOf(false) }
             val allColors by colorViewModel.allColorsLiveData.observeAsState()
-            val scaffoldState = rememberScaffoldState()
 
             configureAccelerometer {
                 when (navigationViewModel.currentRoute) {
@@ -98,29 +101,37 @@ class MainActivity : ComponentActivity() {
                     val context = LocalContext.current
                     var isOpen by remember { mutableStateOf<Boolean?>(null) }
 
-                    AnimatedFAB(
-                        isOpen = isOpen,
-                        onMenuClick = { isOpen = isOpen != true },
-                        onSelectItem = { itemName ->
-                            isOpen = false
+                    if (!isSharingScreenshot.value) {
+                        AnimatedFAB(
+                            isOpen = isOpen,
+                            onMenuClick = { isOpen = isOpen != true },
+                            onSelectItem = { itemName ->
+                                isOpen = false
 
-                            when (itemName) {
-                                MainNavRoutes.ColorGenerator.menuName -> navigationViewModel.setRoute(
-                                    MainNavRoutes.ColorGenerator.routeName
-                                )
-                                MainNavRoutes.GradientGenerator.menuName -> navigationViewModel.setRoute(
-                                    MainNavRoutes.GradientGenerator.routeName
-                                )
-                                "Share" -> shareApp(context, view)
+                                when (itemName) {
+                                    MainNavRoutes.ColorGenerator.menuName -> navigationViewModel.setRoute(
+                                        MainNavRoutes.ColorGenerator.routeName
+                                    )
+                                    MainNavRoutes.GradientGenerator.menuName -> navigationViewModel.setRoute(
+                                        MainNavRoutes.GradientGenerator.routeName
+                                    )
+                                    "Share" -> {
+                                        coroutineScope.launch {
+                                            isSharingScreenshot.value = true
+                                            delay(100)
+                                            shareApp(context, view, isSharingScreenshot)
+                                        }
+                                    }
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             ) {
                 MainNavHost(
                     modifier = Modifier.fillMaxSize(),
-                    navigationViewModel = navigationViewModel,
                     colorViewModel = colorViewModel,
+                    navigationViewModel = navigationViewModel,
                     scaffoldState = scaffoldState
                 )
             }
@@ -192,7 +203,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun shareApp(context: Context, view: View) {
+    private fun shareApp(context: Context, view: View, isSharingScreenshot: MutableState<Boolean>) {
         val image =
             Bitmap.createBitmap(
                 view.width,
@@ -227,6 +238,8 @@ class MainActivity : ComponentActivity() {
                 "IOException while trying to write file for sharing: " + e.message
             )
         }
+
+        isSharingScreenshot.value = false
     }
 }
 

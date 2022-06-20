@@ -21,8 +21,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainNavHost(
     modifier: Modifier,
-    navigationViewModel: NavigationViewModel,
     colorViewModel: ColorViewModel,
+    navigationViewModel: NavigationViewModel,
     scaffoldState: ScaffoldState,
 ) {
     val navController = rememberNavController()
