@@ -11,8 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Scaffold
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
@@ -37,6 +36,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
+@ExperimentalMaterialApi
 class MainActivity : ComponentActivity() {
     private lateinit var colorViewModel: ColorViewModel
     private lateinit var navigationViewModel: NavigationViewModel
@@ -46,7 +46,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        accelerometerHandler = AccelerometerHandler(getSystemService(Context.SENSOR_SERVICE) as SensorManager)
+        accelerometerHandler =
+            AccelerometerHandler(getSystemService(Context.SENSOR_SERVICE) as SensorManager)
 
         colorViewModel = ColorViewModel(application)
         navigationViewModel = NavigationViewModel()
@@ -62,6 +63,10 @@ class MainActivity : ComponentActivity() {
             var isLoading by remember { mutableStateOf(true) }
             val isSharingScreenshot = remember { mutableStateOf(false) }
             val allColors by colorViewModel.allColorsLiveData.observeAsState()
+            val bottomSheetScaffoldState =
+                rememberBottomSheetScaffoldState(
+                    bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed)
+                )
 
             accelerometerHandler.setOnShakeListener {
                 when (navigationViewModel.currentRoute) {
@@ -106,6 +111,15 @@ class MainActivity : ComponentActivity() {
                                     MainNavRoutes.GradientGenerator.menuName -> navigationViewModel.setRoute(
                                         MainNavRoutes.GradientGenerator.routeName
                                     )
+                                    "Method" -> {
+                                        coroutineScope.launch {
+                                            if (bottomSheetScaffoldState.bottomSheetState.isCollapsed) {
+                                                bottomSheetScaffoldState.bottomSheetState.expand()
+                                            } else {
+                                                bottomSheetScaffoldState.bottomSheetState.collapse()
+                                            }
+                                        }
+                                    }
                                     "Share" -> {
                                         coroutineScope.launch {
                                             isSharingScreenshot.value = true
@@ -123,7 +137,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     colorViewModel = colorViewModel,
                     navigationViewModel = navigationViewModel,
-                    scaffoldState = scaffoldState
+                    scaffoldState = scaffoldState,
+                    bottomSheetScaffoldState = bottomSheetScaffoldState
                 )
             }
         }

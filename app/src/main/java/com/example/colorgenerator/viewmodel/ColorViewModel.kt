@@ -2,9 +2,14 @@ package com.example.colorgenerator.viewmodel
 
 import android.app.Application
 import android.graphics.Color
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import com.example.colorgenerator.models.ColorGenerationMethod
 import com.example.colorgenerator.models.ColorLock
 import com.example.colorgenerator.repositories.ColorRepository
 import com.example.colorgenerator.room.ColorLockRoom
@@ -28,6 +33,9 @@ class ColorViewModel(application: Application) : ViewModel() {
         ColorLock(0),
     )
 
+    var generationMethod by mutableStateOf(ColorGenerationMethod.Monochromatic)
+//    var generationMethod = ColorGenerationMethod.Monochromatic
+
     init {
         val colorDb = ColorLockRoomDatabase.getInstance(application)
         val colorDao = colorDb.colorLockDao()
@@ -38,7 +46,42 @@ class ColorViewModel(application: Application) : ViewModel() {
 
     private fun getRandomColor(): Int {
         val random = Random()
-        return Color.argb(255, random.nextInt(256), random.nextInt(256), random.nextInt(256))
+        return Color.argb(
+            255,
+            random.nextInt(256),
+            random.nextInt(256),
+            random.nextInt(256)
+        )
+    }
+
+    private fun getNewColor(listName: String): Int {
+        val random = Random()
+
+        return when (generationMethod) {
+            ColorGenerationMethod.Random -> {
+                Color.argb(
+                    255,
+                    random.nextInt(256),
+                    random.nextInt(256),
+                    random.nextInt(256)
+                )
+            }
+
+            ColorGenerationMethod.Monochromatic -> {
+                val hsl = FloatArray(3)
+                when (listName) {
+                    "Color" -> ColorUtils.colorToHSL(colorGeneratorList.first().value, hsl)
+
+                    "Gradient" -> ColorUtils.colorToHSL(gradientGeneratorList.first().value, hsl)
+                    else -> throw Exception("listName not allowed.")
+                }
+
+                hsl[2] = (10f + random.nextInt(90)) / 100f
+
+                Color.HSVToColor(hsl)
+            }
+        }
+
     }
 
     /** Color Generator **/
@@ -51,7 +94,10 @@ class ColorViewModel(application: Application) : ViewModel() {
     fun updateColorGeneratorValue(i: Int) {
         if (colorGeneratorList[i].isLocked) return
 
-        val newColor = ColorLock(getRandomColor(), colorGeneratorList[i].isLocked)
+        val newColor = ColorLock(
+            if (i == 0) getRandomColor()
+            else getNewColor("Color"), colorGeneratorList[i].isLocked
+        )
 
         colorGeneratorList[i] = newColor
     }
@@ -72,10 +118,13 @@ class ColorViewModel(application: Application) : ViewModel() {
         }
     }
 
-    fun updateGradientGeneratorValue(i: Int) {
+    private fun updateGradientGeneratorValue(i: Int) {
         if (gradientGeneratorList[i].isLocked) return
 
-        val newColor = ColorLock(getRandomColor(), gradientGeneratorList[i].isLocked)
+        val newColor = ColorLock(
+            if (i == 0) getRandomColor()
+            else getNewColor("Gradient"), gradientGeneratorList[i].isLocked
+        )
 
         gradientGeneratorList[i] = newColor
     }

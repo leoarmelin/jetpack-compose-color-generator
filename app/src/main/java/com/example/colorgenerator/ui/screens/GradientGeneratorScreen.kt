@@ -6,6 +6,8 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.BottomSheetScaffoldState
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ScaffoldState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,17 +20,23 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.example.colorgenerator.extensions.getColorName
+import com.example.colorgenerator.models.ColorGenerationMethod
+import com.example.colorgenerator.models.navigation.MainNavRoutes
 import com.example.colorgenerator.ui.components.color_indicator.ColorIndicatorList
+import com.example.colorgenerator.ui.components.methodbottomsheet.MethodBottomSheet
 import com.example.colorgenerator.viewmodel.ColorViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.pow
 import kotlin.math.sqrt
 
+@ExperimentalMaterialApi
 @Composable
 fun GradientGeneratorScreen(
     colorViewModel: ColorViewModel,
-    scaffoldState: ScaffoldState
+    currentRoute: String,
+    scaffoldState: ScaffoldState,
+    bottomSheetScaffoldState: BottomSheetScaffoldState,
 ) {
     val clipboardManager = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
@@ -56,20 +64,38 @@ fun GradientGeneratorScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .transformable(state)
-            .gradientBackground(listOf(animatedColorOne, animatedColorTwo), rotation)
+    val onSelectMethod: (method: ColorGenerationMethod) -> Unit = { method ->
+        scope.launch {
+            colorViewModel.generationMethod = method
+            bottomSheetScaffoldState.bottomSheetState.collapse()
+        }
+    }
+
+    MethodBottomSheet(
+        bottomSheetScaffoldState = bottomSheetScaffoldState,
+        backgroundColor = when (currentRoute) {
+            MainNavRoutes.ColorGenerator.routeName -> Color(colorViewModel.colorGeneratorList.last().value)
+            MainNavRoutes.GradientGenerator.routeName -> Color(colorViewModel.gradientGeneratorList.last().value)
+            else -> Color(0)
+        },
+        selectedMethod = colorViewModel.generationMethod,
+        onClick = onSelectMethod
     ) {
-        ColorIndicatorList(
+        Box(
             modifier = Modifier
-                .padding(top = 16.dp, end = 16.dp)
-                .align(Alignment.TopEnd),
-            colorList = colorViewModel.gradientGeneratorList,
-            onLongPress = onLongPress,
-            onTextClick = onTextClick
-        )
+                .fillMaxSize()
+                .transformable(state)
+                .gradientBackground(listOf(animatedColorOne, animatedColorTwo), rotation)
+        ) {
+            ColorIndicatorList(
+                modifier = Modifier
+                    .padding(top = 16.dp, end = 16.dp)
+                    .align(Alignment.TopEnd),
+                colorList = colorViewModel.gradientGeneratorList,
+                onLongPress = onLongPress,
+                onTextClick = onTextClick
+            )
+        }
     }
 }
 

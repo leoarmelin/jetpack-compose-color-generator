@@ -3,7 +3,7 @@ package com.example.colorgenerator.navigation
 import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material.ScaffoldState
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -18,12 +18,14 @@ import com.example.colorgenerator.viewmodel.ColorViewModel
 import com.example.colorgenerator.viewmodel.NavigationViewModel
 import kotlinx.coroutines.launch
 
+@ExperimentalMaterialApi
 @Composable
 fun MainNavHost(
     modifier: Modifier,
     colorViewModel: ColorViewModel,
     navigationViewModel: NavigationViewModel,
     scaffoldState: ScaffoldState,
+    bottomSheetScaffoldState: BottomSheetScaffoldState
 ) {
     val navController = rememberNavController()
     val coroutineScope = rememberCoroutineScope()
@@ -48,10 +50,20 @@ fun MainNavHost(
                 LoadingScreen()
             }
             composable(MainNavRoutes.ColorGenerator.routeName) {
-                ColorGeneratorScreen(colorViewModel = colorViewModel, scaffoldState = scaffoldState)
+                ColorGeneratorScreen(
+                    colorViewModel = colorViewModel,
+                    scaffoldState = scaffoldState,
+                    currentRoute = navigationViewModel.currentRoute,
+                    bottomSheetScaffoldState = bottomSheetScaffoldState
+                )
             }
             composable(MainNavRoutes.GradientGenerator.routeName) {
-                GradientGeneratorScreen(colorViewModel = colorViewModel, scaffoldState = scaffoldState)
+                GradientGeneratorScreen(
+                    colorViewModel = colorViewModel,
+                    scaffoldState = scaffoldState,
+                    currentRoute = navigationViewModel.currentRoute,
+                    bottomSheetScaffoldState = bottomSheetScaffoldState
+                )
             }
         }
     }

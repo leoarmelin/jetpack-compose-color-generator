@@ -50,6 +50,18 @@ fun MenuList(isOpen: Boolean?, onSelectItem: (itemName: String) -> Unit) {
                 targetAlpha = 0f
             )
         ) {
+            MenuItem("Method", R.drawable.ic_flip, onSelectItem)
+        }
+
+        AnimatedVisibility(
+            visible = isOpen ?: false,
+            enter = fadeIn(
+                initialAlpha = 0f
+            ),
+            exit = fadeOut(
+                targetAlpha = 0f
+            )
+        ) {
             MenuItem("Share", R.drawable.ic_share, onSelectItem)
         }
     }
