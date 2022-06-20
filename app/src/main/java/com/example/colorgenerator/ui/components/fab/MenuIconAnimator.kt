@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.*
 import com.example.colorgenerator.R
 
+// Use when the animation is fluid and not bugging.
 @Composable
 fun MenuIconAnimator(isOpen: Boolean?) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.anim_menu))

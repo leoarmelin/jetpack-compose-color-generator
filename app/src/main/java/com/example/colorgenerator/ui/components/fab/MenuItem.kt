@@ -11,6 +11,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -23,8 +24,9 @@ fun MenuItem(itemName: String, iconId: Int? = null, onClick: (itemName: String) 
     Row(
         modifier = Modifier
             .background(Color(0x80000000), RoundedCornerShape(8.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-            .clickable { onClick(itemName) },
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick(itemName) }
+            .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (iconId != null) {
