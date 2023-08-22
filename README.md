@@ -1,5 +1,7 @@
 # Color Generator App
 
+[See on Play Store](https://play.google.com/store/apps/details?id=com.colorgenerator)
+
 The **Color Generator** app is your creative tool for generating vibrant color palettes and gradients
 with a simple shake of your phone. This app offers an intuitive way to explore a world of colors,
 create appealing combinations, and experiment with gradients at different angles. If you come across
