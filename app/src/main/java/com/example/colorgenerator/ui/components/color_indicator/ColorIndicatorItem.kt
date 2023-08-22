@@ -35,7 +35,7 @@ fun ColorIndicatorItem(
     val currentColor = Color(color.value)
     val hasContrastWithWhite =
         ColorUtils.calculateContrast(currentColor.toArgb(), Color.White.toArgb()) <= 1.5f
-    val animatedColor = animateColorAsState(currentColor)
+    val animatedColor = animateColorAsState(currentColor, label = "animatedColor")
 
     var isTextVisible by remember { mutableStateOf(false) }
 

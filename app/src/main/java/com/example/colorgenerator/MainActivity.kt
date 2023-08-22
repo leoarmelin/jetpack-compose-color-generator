@@ -11,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.*
@@ -46,7 +47,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        accelerometerHandler = AccelerometerHandler(getSystemService(Context.SENSOR_SERVICE) as SensorManager)
+        accelerometerHandler =
+            AccelerometerHandler(getSystemService(Context.SENSOR_SERVICE) as SensorManager)
 
         colorViewModel = ColorViewModel(application)
         navigationViewModel = NavigationViewModel()
@@ -103,9 +105,11 @@ class MainActivity : ComponentActivity() {
                                     MainNavRoutes.ColorGenerator.menuName -> navigationViewModel.setRoute(
                                         MainNavRoutes.ColorGenerator.routeName
                                     )
+
                                     MainNavRoutes.GradientGenerator.menuName -> navigationViewModel.setRoute(
                                         MainNavRoutes.GradientGenerator.routeName
                                     )
+
                                     "Share" -> {
                                         coroutineScope.launch {
                                             isSharingScreenshot.value = true
@@ -120,7 +124,9 @@ class MainActivity : ComponentActivity() {
                 }
             ) {
                 MainNavHost(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(it),
                     colorViewModel = colorViewModel,
                     navigationViewModel = navigationViewModel,
                     scaffoldState = scaffoldState
@@ -209,9 +215,12 @@ fun ConfigureApp(
 
         else -> return
     }
-    val animatedStatusBarColor: State<Color> = animateColorAsState(Color(colorList.first().value))
+    val animatedStatusBarColor: State<Color> = animateColorAsState(
+        Color(colorList.first().value),
+        label = "animatedStatusBarColor"
+    )
     val animatedNavigationBarColor: State<Color> =
-        animateColorAsState(Color(colorList.last().value))
+        animateColorAsState(Color(colorList.last().value), label = "animatedNavigationBarColor")
 
     uiController.setStatusBarColor(
         color = animatedStatusBarColor.value,

@@ -6,8 +6,11 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.ScaffoldState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -20,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import com.example.colorgenerator.extensions.getColorName
 import com.example.colorgenerator.ui.components.color_indicator.ColorIndicatorList
 import com.example.colorgenerator.viewmodel.ColorViewModel
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -28,15 +30,17 @@ import kotlin.math.sqrt
 @Composable
 fun GradientGeneratorScreen(
     colorViewModel: ColorViewModel,
-    scaffoldState: ScaffoldState
 ) {
     val clipboardManager = LocalClipboardManager.current
-    val scope = rememberCoroutineScope()
 
-    val animatedColorOne by animateColorAsState(Color(colorViewModel.gradientGeneratorList[0].value))
-    val animatedColorTwo by animateColorAsState(Color(colorViewModel.gradientGeneratorList[1].value))
+    val animatedColorOne by animateColorAsState(Color(colorViewModel.gradientGeneratorList[0].value),
+        label = "animatedColorOne"
+    )
+    val animatedColorTwo by animateColorAsState(Color(colorViewModel.gradientGeneratorList[1].value),
+        label = "animatedColorTwo"
+    )
 
-    var rotation by remember { mutableStateOf(-45f) }
+    var rotation by remember { mutableFloatStateOf(-45f) }
     val state = rememberTransformableState { _, _, rotationChange ->
         rotation -= rotationChange
     }
@@ -49,11 +53,6 @@ fun GradientGeneratorScreen(
         clipboardManager.setText(
             AnnotatedString(colorViewModel.gradientGeneratorList[i].value.getColorName())
         )
-        scope.launch {
-            scaffoldState.snackbarHostState.showSnackbar(
-                "Copied: ${colorViewModel.gradientGeneratorList[i].value.getColorName()}"
-            )
-        }
     }
 
     Box(

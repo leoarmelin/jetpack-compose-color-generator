@@ -9,7 +9,7 @@ import kotlin.math.sqrt
 class AccelerometerHandler(
     private val sensorManager: SensorManager
 ) {
-    private var accelerometerSensor: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    private var accelerometerSensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     var accelerometerListener: SensorEventListener? = null
     private var mAccel = 0f
     private var mAccelCurrent = SensorManager.GRAVITY_EARTH

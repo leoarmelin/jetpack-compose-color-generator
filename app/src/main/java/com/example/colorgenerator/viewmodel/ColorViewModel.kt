@@ -72,7 +72,7 @@ class ColorViewModel(application: Application) : ViewModel() {
         }
     }
 
-    fun updateGradientGeneratorValue(i: Int) {
+    private fun updateGradientGeneratorValue(i: Int) {
         if (gradientGeneratorList[i].isLocked) return
 
         val newColor = ColorLock(getRandomColor(), gradientGeneratorList[i].isLocked)

@@ -28,7 +28,7 @@ fun MainNavHost(
     val navController = rememberNavController()
     val coroutineScope = rememberCoroutineScope()
     val activity = LocalContext.current as? Activity
-    var closeCount by remember { mutableStateOf(0) }
+    var closeCount by remember { mutableIntStateOf(0) }
 
     BackHandler {
         closeCount++
@@ -48,10 +48,10 @@ fun MainNavHost(
                 LoadingScreen()
             }
             composable(MainNavRoutes.ColorGenerator.routeName) {
-                ColorGeneratorScreen(colorViewModel = colorViewModel, scaffoldState = scaffoldState)
+                ColorGeneratorScreen(colorViewModel = colorViewModel)
             }
             composable(MainNavRoutes.GradientGenerator.routeName) {
-                GradientGeneratorScreen(colorViewModel = colorViewModel, scaffoldState = scaffoldState)
+                GradientGeneratorScreen(colorViewModel = colorViewModel)
             }
         }
     }
